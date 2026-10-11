@@ -9,7 +9,7 @@
 | 도구 소스 | `windows/<도구>/`, `mac/<도구>/` (도구마다 README.md) |
 | 도구 목록 | `catalog.json` — 페이지가 `https://raw.githubusercontent.com/donggun-jung/pc-tools/main/catalog.json`을 직접 읽는다 |
 | 다운로드 파일 | GitHub Releases (태그 `<도구 id>-v<버전>`) |
-| 페이지 | `site/index.html` + `site/catalog.json`(GitHub을 못 읽을 때 쓰는 사본) → VPS `/opt/pc-tools/site/` |
+| 페이지 | `site/index.html` + `site/app.js`(목록 렌더) + `site/catalog.json`(GitHub을 못 읽을 때 쓰는 사본) → VPS `/opt/pc-tools/site/` |
 | 서버 | 컨테이너 `pc-tools`(nginx:1.27-alpine, 네트워크 `investor-profiler_default`, 외부 포트 없음) · 중앙 Caddy `tools.jdg.dev` → `pc-tools:80` · Kuma `tools-https` |
 | 서버 배포 기록·롤백 | `donggun-jung/vps-ops-recovery` `reports/20261012_tools_jdg_dev_deploy_plan.md` |
 | 사규 등재 | `donggun-jung/company-operations` `governance/projects.yml`의 `pc-tools`, `governance/apps.yml`의 `tools` |
@@ -38,8 +38,10 @@
 ## 페이지(site/) 자체를 바꿀 때
 
 1. 디자인 원본: Claude Design 프로젝트 "tools.jdg.dev — 도구 다운로드 페이지" (`Page.dc.html`). 시각 변경은 원본부터 고친 뒤 `site/index.html`에 옮긴다.
-2. `cp catalog.json site/catalog.json` (사본 동기화)
-3. PR → 머지 → `scripts/deploy.sh` (rsync + 확인. 컨테이너 재시작 불필요). 라이브 변경은 오너 승인 대상(`apps.yml` `deploy_approval: owner`).
+2. `cp catalog.json site/catalog.json` (사본 동기화) → `node tests/site-app.test.js` 전부 PASS.
+3. 보안 규칙: 페이지는 인라인 스크립트를 쓰지 않는다(`infra/nginx-default.conf`의 CSP가 `script-src 'self'`). 새 외부 출처(글꼴·API)가 생기면 CSP 목록도 같이 고치고, 고친 nginx 설정은 서버의 `/opt/pc-tools/nginx-default.conf`에도 반영해야 한다(컨테이너 재시작 필요 — 서버 절차는 vps-ops-recovery).
+4. 원격 목록은 `textContent`로만 그리고, 링크는 URL 정규화 뒤 `https://github.com/donggun-jung/pc-tools/` 아래만 허용한다. 비었거나 깨진 목록은 이미 보이는 목록을 지우지 않는다.
+5. PR → 머지 → `scripts/deploy.sh` (rsync + 확인. 컨테이너 재시작 불필요). 라이브 변경은 오너 승인 대상(`apps.yml` `deploy_approval: owner`).
 
 ## 확인
 
