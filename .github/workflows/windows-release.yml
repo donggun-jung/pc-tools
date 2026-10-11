@@ -4,7 +4,7 @@
 #   tag  monitorsaver-v<version>    -> build + smoke run + GitHub Release with MonitorSaver-<version>.zip
 #
 # The tag version must equal Program.Version in the source (fail-closed).
-# Public repo: GitHub-hosted runner minutes are free.
+# Public repo: GitHub-hosted runner minutes are free. Actions must be pinned to full commit SHAs (repo ruleset).
 name: windows-release
 
 on:
@@ -28,7 +28,7 @@ jobs:
     env:
       TOOL_DIR: windows/MonitorSaver
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Read source version
         id: ver
@@ -81,7 +81,7 @@ jobs:
           Write-Host "MonitorSaver-$v.zip  sha256 $sha  size $((Get-Item $zip).Length)"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: MonitorSaver-${{ steps.ver.outputs.version }}
           path: |

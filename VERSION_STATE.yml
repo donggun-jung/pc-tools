@@ -1,0 +1,12 @@
+schema_version: 1
+repo_name: pc-tools
+expected_remote_slug: donggun-jung/pc-tools
+default_branch: main
+integration_ref: origin/main
+integration_sha: live
+active_version: pc-tools-active
+active_status: active
+deployed_version: pc-tools-live
+cloud_status: abandoned
+drive_role: artifact-only
+vps_scope: standalone public static work-cloud app at tools.jdg.dev

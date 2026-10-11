@@ -12,7 +12,7 @@
 // │   - 저수준 훅 없음 (마우스 차단 없음)                                          │
 // │   - 감시 루프 없음, 재소등 없음                                                │
 // │   - 화면을 강제로 켜려는 시도 없음                                             │
-// │   - 소등 요청은 한 시점에 한 번 (자기 창 + 브로드캐스트, 이후 반복 없음)        │
+// │   - 소등 요청은 한 시점에 한 번, 이후 반복 없음                                │
 // │ 깨우기는 Windows 기본 동작에 맡긴다. 유휴 시간이 지나 화면이 꺼졌다가 정상     │
 // │ 복귀하는 바로 그 경로를 그대로 쓰는 것이 가장 안전하다.                        │
 // └────────────────────────────────────────────────────────────────────────────┘
@@ -145,7 +145,7 @@ namespace MonitorSaver
         }
 
         /// <summary>
-        /// 모니터 끄기 2단계(보조): 브로드캐스트. 반드시 별도 스레드에서 부를 것.
+        /// 모니터 끄기 2단계(보조, 잠금을 쓰지 않을 때만): 브로드캐스트. 반드시 별도 스레드에서 부를 것.
         /// 타임아웃은 창마다 적용되므로 멈춘 창이 많으면 길어질 수 있어 짧게 잡는다.
         /// </summary>
         public static void MonitorOffBroadcast()
@@ -256,7 +256,7 @@ namespace MonitorSaver
             sb.AppendLine("; 동작: 핫키 -> (손 뗄 때까지 대기) -> 세션 잠금 -> 잠금 확인 -> 모니터 끄기(1회) -> 끝.");
             sb.AppendLine(";       이후 아무것도 하지 않는다. 깨우기는 Windows 기본 동작(아무 입력)에 맡긴다.");
             sb.AppendLine(";       화면을 다시 끄거나 강제로 켜려는 시도는 일절 하지 않는다.");
-            sb.AppendLine(";       잠금이 확인되지 않으면 화면을 끄지 않는다(트레이 풍선으로 알림).");
+            sb.AppendLine(";       잠금이 확인되지 않으면 화면을 끄지 않는다(트레이 풍선으로 알림, 아이콘을 숨겼으면 로그에만).");
             sb.AppendLine();
             sb.AppendLine("; 핫키. 예: Ctrl+Shift+Alt+L");
             sb.AppendLine("Hotkey=" + c.Hotkey);
@@ -278,7 +278,7 @@ namespace MonitorSaver
             sb.AppendLine("MaxKeyWaitMs=" + c.MaxKeyWaitMs.ToString(CultureInfo.InvariantCulture));
             sb.AppendLine();
             sb.AppendLine("; 잠금이 실제로 걸렸다는 통지(WTS_SESSION_LOCK)를 기다리는 최대 시간(ms).");
-            sb.AppendLine("; 이 시간 안에 통지가 오지 않으면 화면을 끄지 않는다(잠기지 않은 채 꺼지는 것을 막기 위함).");
+            sb.AppendLine("; 이 시간이 지나 확인할 때까지 통지가 없으면 화면을 끄지 않는다(잠기지 않은 채 꺼지는 것을 막기 위함).");
             sb.AppendLine("LockWaitMs=" + c.LockWaitMs.ToString(CultureInfo.InvariantCulture));
             sb.AppendLine();
             sb.AppendLine("; 잠금이 확인된 뒤 소등까지 추가 대기(ms).");
@@ -380,8 +380,9 @@ namespace MonitorSaver
         private int requestStart;
         private volatile bool lockConfirmed;
         private bool sessionNotifyRegistered;  // WTS 통지 등록 성공 여부. 실패면 잠금을 확인할 수 없다.
-        private volatile bool sessionLocked;   // WTS 통지로 추적한 현재 잠금 상태(시작 시점은 잠기지 않은 것으로 본다)
-        private volatile bool broadcastAllowed; // 잠금 해제 통지가 오면 꺼진다 — 보조 브로드캐스트를 막는다
+        private bool sessionLocked;            // WTS 통지로 추적한 현재 잠금 상태(시작 시점은 잠기지 않은 것으로 본다)
+        private bool monitorOffNeedsLock;      // 자기 창 소등을 보내는 동안만 true — WndProc 가 잠금 상태를 마지막으로 확인한다
+        private bool monitorOffSkipped;        // WndProc 가 잠금 해제를 보고 소등을 막았으면 true
         private readonly List<int> watchKeys = new List<int>();
 
         public MainForm(string dir)
@@ -846,8 +847,8 @@ namespace MonitorSaver
         private void BlankNow(int now)
         {
             bool requireLock = cfg.LockFirst;
-            // 잠금 사용인데 그 사이 잠금이 풀렸다면 끄지 않는다(안정화 대기 중 해제 등).
-            // 이 확인과 아래 1단계 소등은 둘 다 UI 스레드에서 이어서 실행되므로, 잠금 해제 통지가 그 사이에 끼어들 수 없다.
+            // 잠금 사용인데 그 사이 잠금이 풀렸다면 끄지 않는다(안정화 대기 중 해제 등). 사용자에게 알리기 위한 확인이고,
+            // 마지막 판정은 소등 메시지를 실제로 처리하는 WndProc 에서 한 번 더 한다.
             if (requireLock && !sessionLocked)
             {
                 AbortBlank("잠금이 풀려서 화면을 끄지 않았습니다.");
@@ -858,18 +859,28 @@ namespace MonitorSaver
             Log.Write("blanking once (" + (now - requestStart) + "ms after hotkey)");
 
             int t0 = Environment.TickCount;
+            monitorOffNeedsLock = requireLock;
+            monitorOffSkipped = false;
             try { Native.MonitorOffOwn(Handle); }
             catch (Exception ex) { Log.Write("MonitorOff(own) failed: " + ex.Message); }
+            finally { monitorOffNeedsLock = false; }
+            if (monitorOffSkipped)
+            {
+                Log.Write("소등 취소(잠금 미확인): 소등 직전에 잠금이 풀림");
+                Notify("잠금이 풀려서 화면을 끄지 않았습니다.", ToolTipIcon.Warning);
+                return;
+            }
 
-            // 2단계(보조 브로드캐스트)는 오래 걸릴 수 있어 별도 스레드에서. 그 전에 잠금이 풀렸으면 생략한다.
-            broadcastAllowed = true;
+            // 잠금 사용 시에는 자기 창 소등만 한다. 보조 브로드캐스트는 다른 스레드에서 오래 걸릴 수 있어
+            // 그 사이 잠금이 풀려도 멈출 수 없기 때문이다(잠긴 줄 알았는데 열린 채 꺼지는 상태를 만들지 않는다).
+            // 잠금을 쓰지 않을 때만 v3 와 같이 브로드캐스트를 보조로 보낸다.
+            if (requireLock)
+            {
+                Log.Write("monitor off sent (" + (Environment.TickCount - t0) + "ms, own window) - hands off from here");
+                return;
+            }
             var t = new Thread(delegate()
             {
-                if (!broadcastAllowed || (requireLock && !sessionLocked))
-                {
-                    Log.Write("broadcast skipped - session unlocked");
-                    return;
-                }
                 try { Native.MonitorOffBroadcast(); }
                 catch (Exception ex) { Log.Write("MonitorOff(broadcast) failed: " + ex.Message); }
                 Log.Write("monitor off sent (" + (Environment.TickCount - t0) + "ms) - hands off from here");
@@ -882,6 +893,14 @@ namespace MonitorSaver
 
         protected override void WndProc(ref Message m)
         {
+            // 자기 창 소등의 마지막 관문. 검사와 실제 처리(base.WndProc) 사이에 다른 코드(로그 잠금 등)를 두지 않는다 —
+            // 그래야 잠금 해제 통지가 그 틈에 처리되는 일이 없다.
+            if ((uint)m.Msg == Native.WM_SYSCOMMAND && (m.WParam.ToInt64() & 0xFFF0) == Native.SC_MONITORPOWER
+                && monitorOffNeedsLock && !sessionLocked)
+            {
+                monitorOffSkipped = true;
+                return;
+            }
             if ((uint)m.Msg == Native.WM_HOTKEY && m.WParam.ToInt32() == HOTKEY_ID) { RequestBlank(); return; }
             if ((uint)m.Msg == WM_APP_BLANK) { RequestBlank(); return; }
             if ((uint)m.Msg == Native.WM_WTSSESSION_CHANGE)
@@ -896,7 +915,6 @@ namespace MonitorSaver
                 else if (ev == Native.WTS_SESSION_UNLOCK)
                 {
                     sessionLocked = false;
-                    broadcastAllowed = false;
                     Log.Write("session UNLOCK");
                     // 잠금 사용으로 진행 중이던 요청은 여기서 끝낸다. 사람이 돌아와 잠금을 풀었다는 뜻이다.
                     if (phase != PhIdle && cfg.LockFirst)
