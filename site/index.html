@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tools.jdg.dev — 자주 쓰는 PC 도구</title>
+<meta name="description" content="Mac과 Windows에서 쓰는 작은 도구 모음. 필요한 컴퓨터에서 받아 바로 씁니다.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='18' rx='3' fill='%230d6b87'/%3E%3Crect x='11' y='25' width='10' height='3' rx='1.5' fill='%230d6b87'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+@font-face{font-family:'SUIT Variable';font-weight:100 900;font-display:swap;src:url('https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.woff2') format('woff2')}
+:root{--bg:#fbfaf7;--paper:#ffffff;--ink:#182026;--ink2:#46525c;--sub:#626d77;--line:#e6e4de;--acc:#0d6b87;--accd:#0a5064;--accs:#e7f2f6;--mono:'JetBrains Mono','SF Mono',Consolas,monospace}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{min-height:100vh;color:var(--ink);font-family:'SUIT Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;font-size:14.5px;line-height:1.65;word-break:keep-all;
+  background-color:var(--bg);background-image:linear-gradient(rgba(24,32,38,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(24,32,38,.035) 1px,transparent 1px);background-size:28px 28px}
+a{color:var(--acc);text-decoration:none}
+a:hover{color:var(--accd)}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--acc);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.mark{font-family:var(--mono);font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--ink)}
+.dot{color:var(--acc)}
+.gh{display:inline-flex;align-items:center;min-height:44px;font-family:var(--mono);font-size:12.5px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:26px;padding-top:28px}
+.eyebrow{margin:0 0 12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--sub)}
+.h1{margin:0;font-size:30px;line-height:1.25;font-weight:750;letter-spacing:-.025em;text-wrap:balance}
+.lead{margin:14px 0 0;color:var(--ink2);text-wrap:pretty}
+.index{display:flex;gap:8px;margin-top:20px}
+.ix{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.ixk{font-weight:650;color:var(--ink)}
+.ixn{font-family:var(--mono);font-size:12px;color:var(--sub)}
+.plat{margin-bottom:26px;scroll-margin-top:16px}
+.ph{display:flex;align-items:center;gap:12px;margin:0 0 14px;font-size:inherit}
+.ptag{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--accd);background:var(--accs);padding:4px 9px;border-radius:6px}
+.pline{flex:1;height:1px;background:var(--line)}
+.cards{display:grid;gap:16px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px 18px;box-shadow:0 1px 0 rgba(24,32,38,.04),0 10px 30px -18px rgba(24,32,38,.18)}
+.meta{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--mono);font-size:12px;color:var(--sub)}
+.name{margin:8px 0 0;font-size:24px;line-height:1.2;font-weight:750;letter-spacing:-.02em}
+.sum{margin:8px 0 0;font-size:15.5px;color:var(--ink);text-wrap:pretty}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin-top:16px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;padding:0 20px;border-radius:12px;background:var(--acc);color:#fff;font-weight:700;font-size:15px}
+.btn:hover{color:#fff;background:var(--accd)}
+.btnm{font-family:var(--mono);font-size:12px;font-weight:500;opacity:.85}
+.lnk{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600}
+.keys{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+.kc{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:34px;padding:0 9px;font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink);background:var(--bg);border:1px solid #d8d5cd;border-bottom-width:3px;border-radius:8px}
+.kres{font-size:14px;font-weight:600;color:var(--ink2)}
+.dl{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.di{display:flex;gap:10px;color:var(--ink2)}
+.dm{flex:none;width:6px;height:6px;margin-top:9px;border-radius:2px;background:var(--acc)}
+.how{margin-top:16px;border-top:1px solid var(--line)}
+.hows{display:flex;align-items:center;min-height:44px;font-weight:650;color:var(--ink);cursor:pointer}
+.steps{margin:4px 0 0;padding:14px 16px;list-style:none;display:grid;gap:8px;background:var(--bg);border:1px dashed #d8d5cd;border-radius:12px}
+.st{display:flex;gap:10px;font-size:14.5px;color:var(--ink2)}
+.sn{flex:none;font-family:var(--mono);font-size:12px;font-weight:600;line-height:24px;color:var(--accd)}
+.sum2{display:inline-flex;align-items:center;min-height:44px;font-size:13px}
+.empty{padding:14px 16px;border:1px dashed #d8d5cd;border-radius:12px;color:var(--sub);background:rgba(255,255,255,.6)}
+.foot{margin-top:12px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--sub)}
+.foot a{text-decoration:underline;text-underline-offset:3px}
+@media (min-width:960px){
+  body{font-size:15.5px}
+  .wrap{padding:28px 40px 56px}
+  .grid{grid-template-columns:300px minmax(0,1fr);gap:48px;padding-top:44px}
+  .intro{position:sticky;top:28px;align-self:start}
+  .h1{font-size:36px}
+  .index{flex-direction:column;align-items:stretch;margin-top:28px}
+  .ix{justify-content:space-between}
+  .card{padding:28px 30px}
+  .name{font-size:28px}
+  .btn{width:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="mark">tools<span class="dot">.</span>jdg.dev</span>
+    <a class="gh" href="https://github.com/donggun-jung/pc-tools">GitHub</a>
+  </header>
+  <div class="grid">
+    <section class="intro">
+      <p class="eyebrow">PC TOOLS · MAC / WINDOWS</p>
+      <h1 class="h1">자주 쓰는 도구를,<br>어느 컴퓨터에서나.</h1>
+      <p class="lead">여러 대의 Mac과 Windows에서 쓰는 작은 도구를 한곳에 모았습니다. 필요한 컴퓨터에서 받아 바로 씁니다.</p>
+      <nav class="index" aria-label="플랫폼">
+        <a class="ix" href="#windows"><span class="ixk">Windows</span><span class="ixn" data-count="windows">–</span></a>
+        <a class="ix" href="#mac"><span class="ixk">Mac</span><span class="ixn" data-count="mac">–</span></a>
+      </nav>
+    </section>
+    <main>
+      <section id="windows" class="plat" aria-labelledby="h-windows">
+        <h2 class="ph" id="h-windows"><span class="ptag">WINDOWS</span><span class="pline"></span></h2>
+        <div class="cards" data-platform="windows"></div>
+      </section>
+      <section id="mac" class="plat" aria-labelledby="h-mac">
+        <h2 class="ph" id="h-mac"><span class="ptag">MAC</span><span class="pline"></span></h2>
+        <div class="cards" data-platform="mac"></div>
+      </section>
+      <noscript><div class="empty">목록을 보려면 JavaScript가 필요합니다. <a href="https://github.com/donggun-jung/pc-tools/releases">GitHub Releases</a>에서 바로 받을 수도 있습니다.</div></noscript>
+      <footer class="foot">소스와 변경 내역은 <a href="https://github.com/donggun-jung/pc-tools">GitHub 저장소</a>에 있습니다.</footer>
+    </main>
+  </div>
+</div>
+<script src="/app.js" defer></script>
+</body>
+</html>

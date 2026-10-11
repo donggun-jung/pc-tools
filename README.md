@@ -14,9 +14,10 @@
 | `windows/<도구>/` | Windows 도구. 소스와 스크립트, 도구별 README |
 | `mac/<도구>/` | Mac 도구 |
 | `catalog.json` | 도구 목록. tools.jdg.dev 페이지가 이 파일을 읽어서 보여준다 |
-| `site/` | tools.jdg.dev 페이지 (정적 HTML 한 장) |
+| `site/` | tools.jdg.dev 페이지 (정적 HTML + 목록 스크립트 app.js) |
 | `infra/` | 페이지 서버(nginx) 설정 |
 | `scripts/deploy.sh` | `site/`를 서버로 올리고 확인 |
+| `tests/site-app.test.js` | 페이지 목록 렌더 시나리오 테스트 (`node tests/site-app.test.js`) |
 | `.github/workflows/` | Windows 도구 빌드·릴리스 (GitHub Actions) |
 | `docs/RUNBOOK.md` | 도구 추가·릴리스·페이지 배포 절차 |
 

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-12",
+  "tools": [
+    {
+      "id": "monitorsaver",
+      "name": "MonitorSaver",
+      "platform": "windows",
+      "version": "3.1",
+      "released": "2026-10-12",
+      "summary": "단축키 한 번에 PC를 잠그고 모니터만 끕니다. 컴퓨터는 끄지 않습니다.",
+      "hotkey": "Ctrl+Shift+Alt+L",
+      "hotkey_action": "잠금 + 화면 끄기",
+      "details": [
+        "잠금이 확인된 뒤에만 화면을 끕니다",
+        "아무 키나 마우스로 화면 복귀, 비밀번호로 잠금 해제",
+        "전원 설정은 건드리지 않음 · 관리자 권한 불필요",
+        "밤새 돌릴 때는 Windows 절전을 꺼 두세요"
+      ],
+      "requirements": "Windows 10 / 11",
+      "download": "https://github.com/donggun-jung/pc-tools/releases/download/monitorsaver-v3.1/MonitorSaver-3.1.zip",
+      "checksum": "https://github.com/donggun-jung/pc-tools/releases/download/monitorsaver-v3.1/MonitorSaver-3.1.zip.sha256",
+      "source": "https://github.com/donggun-jung/pc-tools/tree/main/windows/MonitorSaver",
+      "steps": [
+        "받은 zip 우클릭 → 속성 → '차단 해제'가 보이면 체크 → 확인",
+        "원하는 폴더에 압축 풀기",
+        "Start.cmd 두 번 클릭 → 작업 표시줄 오른쪽에 모니터 아이콘이 뜨면 준비 완료 (경고 창이 뜨면 '추가 정보 → 실행')"
+      ],
+      "optional_steps": [
+        "로그온 때 자동으로 켜려면 Install-Autostart.cmd"
+      ]
+    }
+  ]
+}
