@@ -1,0 +1,9 @@
+.DS_Store
+# runtime files the tools create next to themselves
+*.log
+heartbeat.txt
+MonitorSaver.ini
+# build output (release zips are built by GitHub Actions)
+*.exe
+# agent working records
+.sota/
