@@ -1,0 +1,104 @@
+# Windows tools: build check on PRs, release zip on version tags.
+#
+#   PR touching windows/**          -> build + smoke run (no release)
+#   tag  monitorsaver-v<version>    -> build + smoke run + GitHub Release with MonitorSaver-<version>.zip
+#
+# The tag version must equal Program.Version in the source (fail-closed).
+# Public repo: GitHub-hosted runner minutes are free. Actions must be pinned to full commit SHAs (repo ruleset).
+name: windows-release
+
+on:
+  pull_request:
+    paths:
+      - "windows/**"
+      - ".github/workflows/windows-release.yml"
+  push:
+    tags:
+      - "monitorsaver-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monitorsaver:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # only used by the release step on tag pushes
+    env:
+      TOOL_DIR: windows/MonitorSaver
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Read source version
+        id: ver
+        shell: pwsh
+        run: |
+          $src = Get-Content -Raw -Encoding UTF8 "$env:TOOL_DIR/MonitorSaver.cs"
+          $m = [regex]::Match($src, 'public const string Version = "([0-9.]+)";')
+          if (-not $m.Success) { throw "Program.Version not found in MonitorSaver.cs" }
+          $v = $m.Groups[1].Value
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "source version $v"
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $want = "monitorsaver-v$v"
+            if ($env:GITHUB_REF_NAME -ne $want) { throw "tag $env:GITHUB_REF_NAME does not match source version (expected $want)" }
+          }
+
+      - name: Build
+        shell: cmd
+        run: call "%GITHUB_WORKSPACE%\windows\MonitorSaver\Build.cmd"
+
+      - name: Smoke run (exe starts, parses args, exits cleanly)
+        shell: pwsh
+        run: |
+          $dir = Resolve-Path $env:TOOL_DIR
+          $exe = Join-Path $dir 'MonitorSaver.exe'
+          if (-not (Test-Path $exe)) { throw "MonitorSaver.exe not built" }
+          # -quit with no running instance: logs and exits 0 without touching the session or the display.
+          $p = Start-Process -FilePath $exe -ArgumentList '-quit' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "exit code $($p.ExitCode)" }
+          $log = Get-Content -Raw -Encoding UTF8 (Join-Path $dir 'MonitorSaver.log')
+          if ($log -notmatch '-quit') { throw "expected -quit log line, got: $log" }
+          Write-Host "smoke OK"
+
+      - name: Package
+        id: pkg
+        shell: pwsh
+        run: |
+          $v = '${{ steps.ver.outputs.version }}'
+          $stage = Join-Path $env:RUNNER_TEMP "MonitorSaver"
+          New-Item -ItemType Directory -Force $stage | Out-Null
+          $files = 'MonitorSaver.exe','MonitorSaver.cs','README.md','Build.cmd','Start.cmd','BlankNow.cmd',
+                   'Install-Autostart.cmd','Uninstall-Autostart.cmd','Status.cmd','Status.ps1'
+          foreach ($f in $files) { Copy-Item (Join-Path $env:TOOL_DIR $f) $stage }
+          $zip = Join-Path $env:RUNNER_TEMP "MonitorSaver-$v.zip"
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
+          $sha = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          "$sha  MonitorSaver-$v.zip" | Out-File -Encoding ascii (Join-Path $env:RUNNER_TEMP "MonitorSaver-$v.zip.sha256")
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+          "sha=$sha" >> $env:GITHUB_OUTPUT
+          Write-Host "MonitorSaver-$v.zip  sha256 $sha  size $((Get-Item $zip).Length)"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: MonitorSaver-${{ steps.ver.outputs.version }}
+          path: |
+            ${{ runner.temp }}/MonitorSaver-${{ steps.ver.outputs.version }}.zip
+            ${{ runner.temp }}/MonitorSaver-${{ steps.ver.outputs.version }}.zip.sha256
+
+      - name: Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $v = '${{ steps.ver.outputs.version }}'
+          $notes = "MonitorSaver $v — Windows 10/11, 관리자 권한 불필요.`n`n" +
+                   "받은 zip은 압축을 풀기 전에 속성 → '차단 해제'를 체크하세요.`n`n" +
+                   "SHA-256: ${{ steps.pkg.outputs.sha }}`n`n" +
+                   "변경 내역: windows/MonitorSaver/README.md"
+          gh release create "$env:GITHUB_REF_NAME" `
+            "$env:RUNNER_TEMP/MonitorSaver-$v.zip" "$env:RUNNER_TEMP/MonitorSaver-$v.zip.sha256" `
+            --repo "$env:GITHUB_REPOSITORY" --title "MonitorSaver $v" --notes $notes
