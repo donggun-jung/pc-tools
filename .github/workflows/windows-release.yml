@@ -47,7 +47,7 @@ jobs:
 
       - name: Build
         shell: cmd
-        run: call "%TOOL_DIR%\Build.cmd"
+        run: call "%GITHUB_WORKSPACE%\windows\MonitorSaver\Build.cmd"
 
       - name: Smoke run (exe starts, parses args, exits cleanly)
         shell: pwsh

@@ -815,7 +815,8 @@ namespace MonitorSaver
                     return;
 
                 case PhWaitLock:
-                    // 잠금이 실제로 걸린 뒤에만 다음 단계로. 상한 안에 통지가 안 오면 화면을 끄지 않는다.
+                    // 잠금이 실제로 걸린 뒤에만 다음 단계로. 상한이 지나 이 확인 시점까지 통지가 없으면 화면을 끄지 않는다
+                    // (상한 직후라도 이 tick 전에 도착한 잠금 통지는 실제 잠금이므로 인정한다).
                     // (잠금이 늦게라도 걸렸다면 잠금화면이 켜진 채 남을 뿐이고, Windows 가 유휴 시간 뒤에 끈다)
                     if (!lockConfirmed && now - phaseStart < cfg.LockWaitMs) return;
                     if (!lockConfirmed)
@@ -896,7 +897,7 @@ namespace MonitorSaver
             // 자기 창 소등의 마지막 관문. 검사와 실제 처리(base.WndProc) 사이에 다른 코드(로그 잠금 등)를 두지 않는다 —
             // 그래야 잠금 해제 통지가 그 틈에 처리되는 일이 없다.
             if ((uint)m.Msg == Native.WM_SYSCOMMAND && (m.WParam.ToInt64() & 0xFFF0) == Native.SC_MONITORPOWER
-                && monitorOffNeedsLock && !sessionLocked)
+                && m.LParam.ToInt64() == Native.MONITOR_OFF && monitorOffNeedsLock && !sessionLocked)
             {
                 monitorOffSkipped = true;
                 return;
