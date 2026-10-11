@@ -75,7 +75,8 @@ jobs:
           $zip = Join-Path $env:RUNNER_TEMP "MonitorSaver-$v.zip"
           Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -Force
           $sha = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          "$sha  MonitorSaver-$v.zip" | Out-File -Encoding ascii (Join-Path $env:RUNNER_TEMP "MonitorSaver-$v.zip.sha256")
+          # LF line ending so `sha256sum -c` / `shasum -a 256 -c` work on macOS and Linux too.
+          [IO.File]::WriteAllText((Join-Path $env:RUNNER_TEMP "MonitorSaver-$v.zip.sha256"), "$sha  MonitorSaver-$v.zip`n")
           "zip=$zip" >> $env:GITHUB_OUTPUT
           "sha=$sha" >> $env:GITHUB_OUTPUT
           Write-Host "MonitorSaver-$v.zip  sha256 $sha  size $((Get-Item $zip).Length)"
